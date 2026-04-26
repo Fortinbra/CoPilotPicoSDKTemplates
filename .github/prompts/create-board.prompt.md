@@ -26,6 +26,20 @@ Answer the following before generating the file.  Skip any that do not apply.
    If a WS2812 / NeoPixel is used instead, provide the GPIO pin.
 9. **SMPS / power mode**: does the board use the Pico's power-save pin (`PICO_SMPS_MODE_PIN`)?
 10. **RP2350 extras** (RP2350 only): binary information flags such as `PICO_RP2350_A2_SUPPORTED`.
+11. **Radio Module 2 (RM2) / wireless**: does the board include a CYW43439 (or compatible RM2)
+    wireless chipset?  If yes, which GPIO pins are used for the interface?
+    The Pico W and Pico 2 W use the following defaults — confirm whether your PCB matches:
+
+    | Signal | Pico W / Pico 2 W default | SDK macro |
+    |--------|---------------------------|-----------|
+    | WL_REG_ON (power enable) | GPIO 23 | `CYW43_PIN_WL_REG_ON` |
+    | WL_DATA (bidirectional SPI data / host-wake) | GPIO 24 | `CYW43_PIN_WL_DATA_OUT` / `CYW43_PIN_WL_HOST_WAKE` |
+    | WL_CS (chip select) | GPIO 25 | `CYW43_PIN_WL_CS` |
+    | WL_CLK (SPI clock; also ADC3 / VSYS) | GPIO 29 | `CYW43_PIN_WL_CLK` |
+
+    Note: on Pico W / Pico 2 W the status LED is driven through CYW43 GPIO 0
+    (`CYW43_DEFAULT_LED_PIN 0`) rather than a direct MCU GPIO, so `PICO_DEFAULT_LED_PIN`
+    is not set on those boards.  If your custom board uses the same LED arrangement, say so.
 
 ---
 
@@ -116,6 +130,33 @@ points `PICO_BOARD_HEADER_DIRS`).
 // #define PICO_DEFAULT_WS2812_PIN 16
 // #endif
 
+// -- Radio Module 2 (RM2) / CYW43439 wireless --------------------------------
+// Uncomment and adjust this block if the board includes a CYW43439 (or
+// compatible RM2) wireless chipset.  The values below match the Pico W and
+// Pico 2 W reference design; update GPIO numbers if your PCB differs.
+//
+// #ifndef CYW43_PIN_WL_REG_ON
+// #define CYW43_PIN_WL_REG_ON      23  /**< GPIO23 = CYW43 power enable (WL_REG_ON). */
+// #endif
+// #ifndef CYW43_PIN_WL_DATA_OUT
+// #define CYW43_PIN_WL_DATA_OUT    24  /**< GPIO24 = CYW43 SPI data out (MOSI). */
+// #endif
+// #ifndef CYW43_PIN_WL_HOST_WAKE
+// #define CYW43_PIN_WL_HOST_WAKE   24  /**< GPIO24 = CYW43 host-wake (shared with DATA). */
+// #endif
+// #ifndef CYW43_PIN_WL_CS
+// #define CYW43_PIN_WL_CS          25  /**< GPIO25 = CYW43 SPI chip select. */
+// #endif
+// #ifndef CYW43_PIN_WL_CLK
+// #define CYW43_PIN_WL_CLK         29  /**< GPIO29 = CYW43 SPI clock (also ADC3/VSYS). */
+// #endif
+//
+// When the LED is driven via the CYW43 GPIO rather than a direct MCU pin,
+// remove PICO_DEFAULT_LED_PIN above and set the CYW43 LED GPIO instead:
+// #ifndef CYW43_DEFAULT_LED_PIN
+// #define CYW43_DEFAULT_LED_PIN     0  /**< CYW43 GPIO0 = status LED. */
+// #endif
+
 /** @} */
 ```
 
@@ -156,3 +197,8 @@ message(STATUS "Building for board: ${PICO_BOARD}")
 - If the board has no external flash (bare chip with ROM-only boot), set
   `PICO_FLASH_SIZE_BYTES 0` and document why.
 - `#pragma once` is required; do **not** use `#ifndef` header guards.
+- For boards with a CYW43439 / RM2: the four RM2 GPIO pins (`WL_REG_ON`, `WL_DATA`,
+  `WL_CS`, `WL_CLK`) are reserved and must not be assigned to any other peripheral.
+  If the LED is driven through the CYW43, omit `PICO_DEFAULT_LED_PIN` and define
+  `CYW43_DEFAULT_LED_PIN` instead.  Link with `pico_cyw43_arch_*` rather than any
+  direct GPIO calls to that LED.
