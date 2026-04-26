@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# pre-commit hook for Pico SDK C/C++ projects.
+#
+# Checks performed on every staged .c / .cpp / .h / .hpp file:
+#   1. clang-format — code must be formatted according to .clang-format
+#   2. Include-guard — every header must have #pragma once
+#   3. No bare printf / puts in non-test files (use SDK stdio or a logging macro)
+#   4. No trailing whitespace
+#
+# Installation: run hooks/install-hooks.sh from the repository root.
+
+set -euo pipefail
+
+PASS=true
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|cpp|h|hpp)$' || true)
+
+if [[ -z "$STAGED_FILES" ]]; then
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# 1. clang-format
+# ---------------------------------------------------------------------------
+if command -v clang-format &>/dev/null; then
+    for FILE in $STAGED_FILES; do
+        FORMATTED=$(clang-format --style=file "$FILE" 2>/dev/null)
+        ORIGINAL=$(cat "$FILE")
+        if [[ "$FORMATTED" != "$ORIGINAL" ]]; then
+            echo "❌ clang-format: $FILE is not formatted."
+            echo "   Run: clang-format --style=file -i $FILE"
+            PASS=false
+        fi
+    done
+else
+    echo "⚠️  clang-format not found — skipping format check."
+fi
+
+# ---------------------------------------------------------------------------
+# 2. #pragma once in every header
+# ---------------------------------------------------------------------------
+for FILE in $STAGED_FILES; do
+    case "$FILE" in *.h|*.hpp)
+        if ! grep -q '#pragma once' "$FILE"; then
+            echo "❌ pragma-once: $FILE is missing '#pragma once'."
+            PASS=false
+        fi
+        ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# 3. No bare printf / puts in production code
+#    (Files under tests/ or with _test in the name are exempt.)
+# ---------------------------------------------------------------------------
+for FILE in $STAGED_FILES; do
+    case "$FILE" in
+        tests/*|*_test.c|*_test.cpp) continue ;;
+    esac
+    if grep -nE '\b(printf|puts|putchar)\s*\(' "$FILE" | grep -qv '//' ; then
+        echo "❌ stdio: $FILE contains bare printf/puts — use a logging macro or SDK stdio."
+        PASS=false
+    fi
+done
+
+# ---------------------------------------------------------------------------
+# 4. No trailing whitespace
+# ---------------------------------------------------------------------------
+for FILE in $STAGED_FILES; do
+    if grep -Pn '\s+$' "$FILE" &>/dev/null; then
+        echo "❌ whitespace: $FILE has trailing whitespace."
+        PASS=false
+    fi
+done
+
+# ---------------------------------------------------------------------------
+if [[ "$PASS" == "false" ]]; then
+    echo ""
+    echo "Pre-commit checks failed.  Fix the issues above and re-stage the files."
+    exit 1
+fi
+
+exit 0
