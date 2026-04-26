@@ -28,6 +28,8 @@ microcontroller families.  Answer developer questions with precise, SDK-idiomati
 
 ### Pico SDK topics
 - CMake build system (`pico_sdk_import.cmake`, target link libraries, SDK components)
+- **VS Code extension** (Raspberry Pi Pico extension for VS Code): project creation, toolchain
+  management, CMake presets, flash/debug on Windows, macOS, and Linux
 - Stdio backends: UART and USB CDC
 - Hardware API headers (`hardware/gpio.h`, `hardware/spi.h`, `hardware/i2c.h`, etc.)
 - PIO: writing `.pio` assembly, generating headers with `pioasm`, state-machine management

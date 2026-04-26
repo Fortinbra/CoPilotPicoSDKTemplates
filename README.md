@@ -4,6 +4,11 @@ A collection of reusable GitHub Copilot instructions, prompt templates, agents, 
 for firmware projects built on the
 [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) (RP2040 / RP2350).
 
+Designed for use with the
+[Raspberry Pi Pico VS Code extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico),
+which is supported on **Windows, macOS, and Linux** and handles toolchain setup, CMake
+configuration, and flashing automatically.
+
 ---
 
 ## Purpose
@@ -34,6 +39,7 @@ The goals are to:
   prompts/
     create-component.prompt.md   # Scaffold a new HAL/driver component
     create-driver.prompt.md      # Scaffold a peripheral driver
+    create-board.prompt.md       # Generate a board.h for a custom PCB
     code-review.prompt.md        # Embedded firmware code review
     add-unit-test.prompt.md      # Add unit tests for firmware code
     debug-hardfault.prompt.md    # Debug a HardFault / crash
@@ -70,7 +76,7 @@ cp -r .github/prompts  <your-project>/.github/prompts
 ```
 
 Prompt files appear in the **GitHub Copilot Chat** slash-command list when you open the repo in
-VS Code. Invoke them with `/create-component`, `/code-review`, etc.
+VS Code. Invoke them with `/create-component`, `/create-board`, `/code-review`, etc.
 
 #### Copilot agents
 

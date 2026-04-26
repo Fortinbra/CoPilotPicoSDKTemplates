@@ -7,6 +7,23 @@ toward producing clean, maintainable firmware that is idiomatic for the
 
 ---
 
+## Development environment
+
+The primary development environment is the
+**[Raspberry Pi Pico VS Code extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico)**,
+which is supported on **Windows, macOS, and Linux** and handles toolchain installation,
+CMake configuration, SDK management, and flashing automatically.
+
+- When suggesting build steps or toolchain setup, **always give the VS Code extension workflow
+  first**, followed by the equivalent command-line instructions for CI or non-VS-Code users.
+- On Windows the extension installs the `arm-none-eabi-gcc` toolchain and CMake into an
+  isolated location; do **not** assume these are on `PATH` — always use the VS Code tasks or
+  the `cmake --preset` approach the extension generates.
+- For flashing, prefer the extension's one-click "Run" button or drag-and-drop UF2 over
+  platform-specific `openocd` command lines, unless the user explicitly asks for the latter.
+
+---
+
 ## Language and standard
 
 - Source files use **C17** (`.c` / `.h`) or **C++17** (`.cpp` / `.hpp`).
@@ -135,6 +152,30 @@ reaching into global state.
 - Module-level overview comments go at the top of the header file.
 - Keep comments factual and brief; prefer self-documenting names over comments that simply
   restate the code.
+
+---
+
+## Clarifying questions and alternatives
+
+When a request would produce code or configuration that conflicts with any guideline in this
+file, **do not silently comply and do not silently refuse**.  Instead:
+
+1. **Identify the conflict** — briefly explain which guideline is affected and why the requested
+   approach is problematic (e.g. introduces dynamic allocation, bypasses a resource-claim API,
+   ignores error returns).
+2. **Ask a clarifying question** — check whether there is a specific constraint or use-case that
+   justifies the exception, so that the advice can be tailored appropriately.
+3. **Suggest a conforming alternative** — offer at least one alternative that satisfies the
+   original intent while staying within the guidelines.
+
+Example response pattern:
+
+> The approach you described uses `malloc` inside an ISR, which can cause priority inversion and
+> non-deterministic latency (see *Resource management* in the project guidelines).
+>
+> Could you clarify whether this ISR must allocate variable-length data at runtime, or whether
+> the maximum size is known at compile time?  If the size is bounded, a statically allocated
+> ring-buffer avoids the allocation entirely — happy to scaffold that instead.
 
 ---
 
